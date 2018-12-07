@@ -7,6 +7,7 @@ import android.nfc.NdefMessage;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
 import android.nfc.tech.Ndef;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -34,10 +35,13 @@ public class MainActivity extends AppCompatActivity implements Listener{
     private Button mBtWrite;
     private Button mBtRead;
     private static String message;
-
+    private int taps = 0;
+    private int fireTaps = 0;
+    private String prevMessage = "";
 
     private NFCWriteFragment mNfcWriteFragment;
     private NFCReadFragment mNfcReadFragment;
+    private IDFragment idFragment;
 
     private boolean isDialogDisplayed = false;
     private boolean isWrite = false;
@@ -84,6 +88,22 @@ public class MainActivity extends AppCompatActivity implements Listener{
         mNfcWriteFragment.show(getFragmentManager(),NFCWriteFragment.TAG);
 
     }
+
+
+    private void showIDFragment() {
+
+
+
+        idFragment = (IDFragment) getFragmentManager().findFragmentByTag(idFragment.TAG);
+
+        if (idFragment == null) {
+
+            idFragment = IDFragment.newInstance();
+        }
+        idFragment.show(getFragmentManager(),idFragment.TAG);
+
+    }
+
 
     private void showReadFragment() {
 
@@ -147,7 +167,7 @@ public class MainActivity extends AppCompatActivity implements Listener{
                 ndef.connect();
                 NdefMessage ndefMessage = ndef.getNdefMessage();
                 message = new String(ndefMessage.getRecords()[0].getPayload());
-                Log.d("ddddddddddd",message);
+
                 ndef.close();
 
             } catch (IOException | FormatException e) {
@@ -155,9 +175,63 @@ public class MainActivity extends AppCompatActivity implements Listener{
 
             }
 
-            if(message.equals("Call Police") && !isDialogDisplayed) {
-                makePhoneCall();
+
+
+            if (!isDialogDisplayed)
+            {
+                taps++;
+                checkSequence();
             }
+
+
+            // Checks on the message read from the RFID
+
+            if(message.equals("Call Police") && !isDialogDisplayed && taps == 2) {
+                CallPolice();
+                taps =0;
+            }
+
+            if(message.equals("Call Ambulance") && !isDialogDisplayed && taps == 2) {
+                CallAmbulance();
+                taps =0;
+            }
+
+            if (message.equals("Call Emergency Contact")  && !isDialogDisplayed && taps == 2)
+            {
+                CallEmergency();
+                taps=0;
+            }
+
+            if (fireTaps==2)
+            {
+                CallFire();
+                taps=0;
+                fireTaps=0;
+            }
+
+
+
+
+
+
+            if(message.equals("ID") && !isDialogDisplayed && taps == 1)
+            {
+                Handler handler = new Handler();
+                handler.postDelayed(new Runnable() {
+                    public void run() {
+                        if (message.equals("ID"))
+                            showIDFragment();
+
+                    }
+                }, 3000);
+
+                prevMessage = "ID";
+
+                taps = 0;
+
+            }
+
+
 
             if (isDialogDisplayed) {
 
@@ -181,9 +255,33 @@ public class MainActivity extends AppCompatActivity implements Listener{
         }
     }
 
-    private void makePhoneCall() {
+    // This method is responsible for the sequence of the path from the ID tag to the Fire department tag
+    private void checkSequence()
+    {
+        if (message.equals("Call Ambulance") && prevMessage.equals("ID") && taps ==1)
+        {
+            Log.d("PREV Message:",prevMessage);
+            fireTaps ++;
+            prevMessage = "Call Ambulance";
+            //taps = 0;
+        }
+
+        if (message.equals("Call Fire Department") && prevMessage.equals("Call Ambulance") && taps ==2 && fireTaps==1)
+        {
+            Log.d("PREV Message:",prevMessage);
+            fireTaps ++;
+            //taps = 0;
+        }
+
+
+
+        Log.d("Current Message:",message);
+        Log.d("Fire TAPS",""+ fireTaps);
+    }
+
+    private void CallPolice() {
         String number = "5464464";
-        if (number.trim().length() > 0) {
+
 
             if (ContextCompat.checkSelfPermission(MainActivity.this,
                     Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
@@ -194,17 +292,74 @@ public class MainActivity extends AppCompatActivity implements Listener{
                 startActivity(new Intent(Intent.ACTION_CALL, Uri.parse(dial)));
             }
 
+
+    }
+
+    private void CallAmbulance() {
+        String number = "1254";
+
+
+            if (ContextCompat.checkSelfPermission(MainActivity.this,
+                    Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(MainActivity.this,
+                        new String[]{Manifest.permission.CALL_PHONE}, REQUEST_CALL);
+            } else {
+                String dial = "tel:" + number;
+                startActivity(new Intent(Intent.ACTION_CALL, Uri.parse(dial)));
+            }
+
+
+    }
+
+    private void CallFire() {
+        String number = "12546666";
+
+
+        if (ContextCompat.checkSelfPermission(MainActivity.this,
+                Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(MainActivity.this,
+                    new String[]{Manifest.permission.CALL_PHONE}, REQUEST_CALL);
         } else {
-            Toast.makeText(MainActivity.this, "Enter Phone Number", Toast.LENGTH_SHORT).show();
+            String dial = "tel:" + number;
+            startActivity(new Intent(Intent.ACTION_CALL, Uri.parse(dial)));
         }
+
+
+    }
+
+    private void CallEmergency() {
+        String number = "011111111";
+
+
+        if (ContextCompat.checkSelfPermission(MainActivity.this,
+                Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(MainActivity.this,
+                    new String[]{Manifest.permission.CALL_PHONE}, REQUEST_CALL);
+        } else {
+            String dial = "tel:" + number;
+            startActivity(new Intent(Intent.ACTION_CALL, Uri.parse(dial)));
+        }
+
+
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == REQUEST_CALL) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                makePhoneCall();
-            } else {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED && message.equals("Call Police")) {
+                CallPolice();
+            }
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED && message.equals("Call Ambulance")) {
+                CallAmbulance();
+            }
+
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED && message.equals("Call Fire Department")) {
+                CallFire();
+            }
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED && message.equals("Call Emergency Contact")) {
+                CallEmergency();
+            }
+            else {
                 Toast.makeText(this, "Permission DENIED", Toast.LENGTH_SHORT).show();
             }
         }
