@@ -31,6 +31,7 @@ public class MainActivity extends AppCompatActivity implements Listener{
 
     public static final String TAG = MainActivity.class.getSimpleName();
     private static final int REQUEST_CALL = 1;
+    private static final int REQUEST_SMS = 1;
     private EditText mEtMessage;
     private Button mBtWrite;
     private Button mBtRead;
@@ -38,7 +39,7 @@ public class MainActivity extends AppCompatActivity implements Listener{
     private int taps = 0;
     private int fireTaps = 0;
     private String prevMessage = "";
-
+    private  String ambulanceNumber,ambulanceMessage;
     private NFCWriteFragment mNfcWriteFragment;
     private NFCReadFragment mNfcReadFragment;
     private IDFragment idFragment;
@@ -209,6 +210,12 @@ public class MainActivity extends AppCompatActivity implements Listener{
                 fireTaps=0;
             }
 
+            if(message.equals("Text Ambulance") && !isDialogDisplayed && taps == 1)
+            {
+                textAmbulance();
+                taps=0;
+            }
+
 
 
 
@@ -343,6 +350,30 @@ public class MainActivity extends AppCompatActivity implements Listener{
 
     }
 
+    public void textAmbulance()
+    {
+        if (ContextCompat.checkSelfPermission(MainActivity.this,
+                Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(MainActivity.this,
+                    new String[]{Manifest.permission.SEND_SMS}, REQUEST_SMS);
+        }
+
+        else
+        {
+            ambulanceNumber = "0143256789";
+            ambulanceMessage = "Location: ay makan msh moshkla. 33 years old. Blood Type: B+.";
+            SmsManager smsManager = SmsManager.getDefault();
+            smsManager.sendTextMessage(ambulanceNumber, null, ambulanceMessage, null, null);
+        }
+
+    }
+
+
+
+
+
+
+
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == REQUEST_CALL) {
@@ -358,10 +389,25 @@ public class MainActivity extends AppCompatActivity implements Listener{
             }
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED && message.equals("Call Emergency Contact")) {
                 CallEmergency();
-            }
-            else {
+            } else {
                 Toast.makeText(this, "Permission DENIED", Toast.LENGTH_SHORT).show();
             }
+        }
+
+        if (requestCode == REQUEST_SMS) {
+            if (grantResults.length > 0
+                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                SmsManager smsManager = SmsManager.getDefault();
+                smsManager.sendTextMessage(ambulanceNumber, null, ambulanceMessage, null, null);
+                Toast.makeText(getApplicationContext(), "SMS sent.",
+                        Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(getApplicationContext(),
+                        "SMS faild, please try again.", Toast.LENGTH_LONG).show();
+                return;
+            }
+
+
         }
     }
 }
