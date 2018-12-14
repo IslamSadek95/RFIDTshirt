@@ -210,8 +210,9 @@ public class MainActivity extends AppCompatActivity implements Listener{
                 fireTaps=0;
             }
 
-            if(message.equals("Text Ambulance") && !isDialogDisplayed && taps == 1)
+            if(message.equals("Heart Attack") || message.equals("Diabetic Coma") || message.equals("Going into Labor") && !isDialogDisplayed && taps == 1)
             {
+                Log.d("hii","helloooo");
                 textAmbulance();
                 taps=0;
             }
@@ -361,7 +362,9 @@ public class MainActivity extends AppCompatActivity implements Listener{
         else
         {
             ambulanceNumber = "0143256789";
-            ambulanceMessage = "Location: ay makan msh moshkla. 33 years old. Blood Type: B+.";
+
+            ambulanceMessage = "Case: " + message + ". Location: ay makan msh moshkla. Age: 33 years old. Blood Type: B+.";
+            Log.d("kiki",ambulanceMessage);
             SmsManager smsManager = SmsManager.getDefault();
             smsManager.sendTextMessage(ambulanceNumber, null, ambulanceMessage, null, null);
         }
