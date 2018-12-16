@@ -24,14 +24,19 @@ import android.Manifest;
 import android.view.View;
 import android.support.v4.app.ActivityCompat;
 import android.widget.Toast;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 
 import java.io.IOException;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements Listener{
 
     public static final String TAG = MainActivity.class.getSimpleName();
     private static final int REQUEST_CALL = 1;
     private static final int REQUEST_SMS = 1;
+    private static final int REQUEST_Location= 1;
     private EditText mEtMessage;
     private Button mBtWrite;
     private Button mBtRead;
@@ -43,6 +48,7 @@ public class MainActivity extends AppCompatActivity implements Listener{
     private NFCWriteFragment mNfcWriteFragment;
     private NFCReadFragment mNfcReadFragment;
     private IDFragment idFragment;
+    private String knownLocation;
 
     private boolean isDialogDisplayed = false;
     private boolean isWrite = false;
@@ -58,6 +64,8 @@ public class MainActivity extends AppCompatActivity implements Listener{
 
         initViews();
         initNFC();
+
+        sendCurrentLocationToEmergencyContacts();
 
 
     }
@@ -239,6 +247,18 @@ public class MainActivity extends AppCompatActivity implements Listener{
 
             }
 
+            if (message.equals("Send location to emergency contacts") && !isDialogDisplayed && taps == 1)
+            {
+                sendCurrentLocationToEmergencyContacts();
+                taps = 0;
+            }
+
+            if (message.equals("Kidnapped") && !isDialogDisplayed && taps == 1)
+            {
+                kidnapped();
+                taps = 0;
+            }
+
 
 
             if (isDialogDisplayed) {
@@ -351,8 +371,54 @@ public class MainActivity extends AppCompatActivity implements Listener{
 
     }
 
+    public void sendCurrentLocationToEmergencyContacts()
+    {
+        String location  = sendLocation();
+        if (ContextCompat.checkSelfPermission(MainActivity.this,
+                Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(MainActivity.this,
+                    new String[]{Manifest.permission.SEND_SMS}, REQUEST_SMS);
+        }
+
+        else
+        {
+
+            String number = "01111111";
+
+           String message =  "I need help, My current location is "+ location;
+            SmsManager smsManager = SmsManager.getDefault();
+            smsManager.sendTextMessage(number, null, message, null, null);
+        }
+    }
+
+    public void kidnapped()
+    {
+        String location = sendLocation();
+
+        if (ContextCompat.checkSelfPermission(MainActivity.this,
+                Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(MainActivity.this,
+                    new String[]{Manifest.permission.SEND_SMS}, REQUEST_SMS);
+        }
+
+        else
+        {
+
+            String number = "5464464";
+
+            String message =  "I need help, My current location is "+ location;
+            SmsManager smsManager = SmsManager.getDefault();
+            smsManager.sendTextMessage(number, null, message, null, null);
+
+            CallPolice();
+        }
+
+    }
+
     public void textAmbulance()
     {
+
+        String location  = sendLocation();
         if (ContextCompat.checkSelfPermission(MainActivity.this,
                 Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(MainActivity.this,
@@ -363,8 +429,7 @@ public class MainActivity extends AppCompatActivity implements Listener{
         {
             ambulanceNumber = "0143256789";
 
-            ambulanceMessage = "Case: " + message + ". Location: ay makan msh moshkla. Age: 33 years old. Blood Type: B+.";
-            Log.d("kiki",ambulanceMessage);
+            ambulanceMessage = "Case: " + message + ". Location: "+location+".. Age: 33 years old. Blood Type: B+.";
             SmsManager smsManager = SmsManager.getDefault();
             smsManager.sendTextMessage(ambulanceNumber, null, ambulanceMessage, null, null);
         }
@@ -372,7 +437,65 @@ public class MainActivity extends AppCompatActivity implements Listener{
     }
 
 
+    private String sendLocation() {
 
+        if (ContextCompat.checkSelfPermission(MainActivity.this,
+                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(MainActivity.this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_Location);
+
+            return null ;
+        } else {
+            LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+
+
+            List<String> providers = locationManager.getProviders(true);
+
+            for (String provider : providers) {
+                locationManager.requestLocationUpdates(provider, 1000, 0,
+                        new LocationListener() {
+
+                            public void onLocationChanged(Location location) {
+                            }
+
+                            public void onProviderDisabled(String provider) {
+                            }
+
+                            public void onProviderEnabled(String provider) {
+                            }
+
+                            public void onStatusChanged(String provider, int status,
+                                                        Bundle extras) {
+                            }
+                        });
+
+                Location location = locationManager.getLastKnownLocation(provider);
+                Log.d("hiiii","hhhhh1");
+                Log.d("hiiii",""+providers);
+
+                if (location != null) {
+                    double latitude = location.getLatitude();
+                    double longitude = location.getLongitude();
+                    knownLocation = "https://google.com/maps/place/" + longitude + ',' + latitude;
+                    Log.d("hiiii","hhhhh2");
+                    Log.d("hiiii",knownLocation);
+                    return knownLocation;
+                }
+
+                else {
+                    return sendLocation();
+                }
+
+
+
+            }
+
+
+        }
+
+        return null;
+
+    }
 
 
 
@@ -397,20 +520,20 @@ public class MainActivity extends AppCompatActivity implements Listener{
             }
         }
 
-        if (requestCode == REQUEST_SMS) {
-            if (grantResults.length > 0
-                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                SmsManager smsManager = SmsManager.getDefault();
-                smsManager.sendTextMessage(ambulanceNumber, null, ambulanceMessage, null, null);
-                Toast.makeText(getApplicationContext(), "SMS sent.",
-                        Toast.LENGTH_LONG).show();
-            } else {
-                Toast.makeText(getApplicationContext(),
-                        "SMS faild, please try again.", Toast.LENGTH_LONG).show();
-                return;
-            }
-
-
-        }
+//        if (requestCode == REQUEST_SMS) {
+//            if (grantResults.length > 0
+//                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+//                SmsManager smsManager = SmsManager.getDefault();
+//                smsManager.sendTextMessage(ambulanceNumber, null, ambulanceMessage, null, null);
+//                Toast.makeText(getApplicationContext(), "SMS sent.",
+//                        Toast.LENGTH_LONG).show();
+//            } else {
+//                Toast.makeText(getApplicationContext(),
+//                        "SMS faild, please try again.", Toast.LENGTH_LONG).show();
+//                return;
+//            }
+//
+//
+//        }
     }
 }
