@@ -44,11 +44,12 @@ public class MainActivity extends AppCompatActivity implements Listener{
     private int taps = 0;
     private int fireTaps = 0;
     private String prevMessage = "";
-    private  String ambulanceNumber,ambulanceMessage;
+    private  String ambulanceNumber,ambulanceMessage,policeNumber, emergencyContact, fireDepartment;
     private NFCWriteFragment mNfcWriteFragment;
     private NFCReadFragment mNfcReadFragment;
     private IDFragment idFragment;
     private String knownLocation;
+
 
     private boolean isDialogDisplayed = false;
     private boolean isWrite = false;
@@ -65,7 +66,12 @@ public class MainActivity extends AppCompatActivity implements Listener{
         initViews();
         initNFC();
 
-        sendCurrentLocationToEmergencyContacts();
+
+
+        ambulanceNumber = "01060784477";
+        policeNumber  = "01060784477";
+        emergencyContact = "01060784477";
+        fireDepartment = "01060784477";
 
 
     }
@@ -308,7 +314,7 @@ public class MainActivity extends AppCompatActivity implements Listener{
     }
 
     private void CallPolice() {
-        String number = "5464464";
+        String number = policeNumber;;
 
 
             if (ContextCompat.checkSelfPermission(MainActivity.this,
@@ -324,7 +330,7 @@ public class MainActivity extends AppCompatActivity implements Listener{
     }
 
     private void CallAmbulance() {
-        String number = "1254";
+        String number = ambulanceNumber;
 
 
             if (ContextCompat.checkSelfPermission(MainActivity.this,
@@ -340,7 +346,7 @@ public class MainActivity extends AppCompatActivity implements Listener{
     }
 
     private void CallFire() {
-        String number = "12546666";
+        String number = fireDepartment;
 
 
         if (ContextCompat.checkSelfPermission(MainActivity.this,
@@ -356,7 +362,7 @@ public class MainActivity extends AppCompatActivity implements Listener{
     }
 
     private void CallEmergency() {
-        String number = "011111111";
+        String number = emergencyContact;
 
 
         if (ContextCompat.checkSelfPermission(MainActivity.this,
@@ -383,7 +389,7 @@ public class MainActivity extends AppCompatActivity implements Listener{
         else
         {
 
-            String number = "01111111";
+            String number = emergencyContact;
 
            String message =  "I need help, My current location is "+ location;
             SmsManager smsManager = SmsManager.getDefault();
@@ -404,7 +410,7 @@ public class MainActivity extends AppCompatActivity implements Listener{
         else
         {
 
-            String number = "5464464";
+            String number = policeNumber;
 
             String message =  "I need help, My current location is "+ location;
             SmsManager smsManager = SmsManager.getDefault();
@@ -427,7 +433,7 @@ public class MainActivity extends AppCompatActivity implements Listener{
 
         else
         {
-            ambulanceNumber = "0143256789";
+
 
             ambulanceMessage = "Case: " + message + ". Location: "+location+".. Age: 33 years old. Blood Type: B+.";
             SmsManager smsManager = SmsManager.getDefault();
